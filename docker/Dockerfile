@@ -60,7 +60,7 @@ RUN conda update -qy conda \
 
 COPY . /app/alphafold
 RUN wget -q -P /app/alphafold/alphafold/common/ \
-  https://git.scicore.unibas.ch/schwede/openstructure/-/raw/7102c63615b64735c4941278d92b554ec94415f8/modules/mol/alg/src/stereo_chemical_props.txt
+  https://web.archive.org/web/20210721004611id_/https://git.scicore.unibas.ch/schwede/openstructure/-/raw/7102c63615b64735c4941278d92b554ec94415f8/modules/mol/alg/src/stereo_chemical_props.txt
 
 # Install pip packages.
 RUN pip3 install --upgrade pip \
@@ -87,4 +87,13 @@ RUN echo $'#!/bin/bash\n\
 ldconfig\n\
 python /app/alphafold/run_alphafold.py "$@"' > /app/run_alphafold.sh \
   && chmod +x /app/run_alphafold.sh
-ENTRYPOINT ["/app/run_alphafold.sh"]
+
+RUN apt-get install -y --no-install-recommends bzip2 ca-certificates gnupg2
+RUN /bin/bash -c "conda install -q -y -c conda-forge -c bioconda snakemake snakemake-minimal --only-deps && \
+    source activate && \
+    conda clean --all -y && \
+    which python && \
+    pip install reports messaging google-cloud"
+
+RUN echo "source activate" > ~/.bashrc
+ENV PATH /opt/conda/envs/snakemake/bin:/app:${PATH}
